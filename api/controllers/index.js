@@ -41,6 +41,31 @@ let controller = {
 
     },
 
+    getItems: async (req, res) => {
+        let items = await mysqlConnection.query("SELECT * FROM `auction-app`.items");
+        res.json(items)
+    },
+    addItem: async (req, res) => {
+        const { name, imgsrc, des, available, starting_price} = req.body;
+        let data = { name, imgsrc, des, available, starting_price};
+        data.imgsrc = data.imgsrc.replace(/'/g, '');
+        await mysqlConnection.query("INSERT INTO `auction-app`.items SET ?",[data]);
+        res.json("Created")
+    }
+    ,
+    editItem: async (req, res) => {
+        const { id, name, imgsrc, des, available, starting_price} = req.body;
+        let data = { name, imgsrc, des, available, starting_price};
+        data.imgsrc = data.imgsrc.replace(/'/g, '');
+        await mysqlConnection.query("UPDATE `auction-app`.items SET ? WHERE id = ?",[data, id]);
+        res.json("Created");
+    },
+    subscribeItem: async (req, res) => {
+        const { item_id, email} = req.body;
+        await mysqlConnection.query("INSERT INTO `auction-app`.items_subscriptions SET item_id = ?, email = ?", [item_id, email]);
+        res.json("Added")
+    },
+
 }
 
 module.exports = controller;
