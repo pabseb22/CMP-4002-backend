@@ -1,5 +1,6 @@
 const mysqlConnection = require('../api/connection/connection');
-const { transporter } = require('../helpers/email');
+const nodemailer = require('nodemailer');
+const mail  = require('../helpers/email');
 const handlebars = require('handlebars')
 let fs = require('fs');
 const mailing = {};
@@ -62,9 +63,21 @@ function file(path) {
   }
 }
 
+let transport = nodemailer.createTransport({
+    name: process.env.MAIL_NAME,
+    host: process.env.MAIL_HOST,
+    port: process.env.MAIL_PORT,
+    auth: {
+      user: process.env.MAIL_ID, // generated ethereal user
+      pass: process.env.MAIL_PASS  // generated ethereal password
+    },
+    debug: true,
+    logger: true
+});
 async function sendMail(mailOptions) {
+
   try {
-    await transporter.sendMail(mailOptions);
+    await transport.sendMail(mailOptions);
     return 1;
   } catch (error) {
     console.log(error);
