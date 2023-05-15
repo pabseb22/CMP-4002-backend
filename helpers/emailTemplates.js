@@ -12,14 +12,21 @@ handlebars.registerHelper('toFixed', function (number) {
   return number.toFixed(0);
 })
 
-mailing.testMail = async () => {
-  const path = './public/email_templates/email_negotiation.html';
+mailing.testMail = async (type) => {
+  let path = './public/email_templates/email_new.html';
+  let replacements = {}
+  if(type == 0){
+    path = './public/email_templates/email_new.html';
+  }else if(type == 1){
+    path = './public/email_templates/email_end.html';
+  }
+  
   let htmlF = fs.readFileSync(path).toString();
   if (!htmlF) {
     return 0
   } else {
 
-    let replacements = { }
+
 
     let recipients = []
     mysqlConnection.query("SELECT email FROM `auction-app`.users ",
@@ -37,7 +44,7 @@ mailing.testMail = async () => {
             let mailOptions = {
               from: `"Auction Services" <${sender_email}>`, // sender address
               to: recipient, 
-              subject: 'Auction Ended', // Subject line
+              subject: 'Auction Update', // Subject line
               text: 'Auctions Notifications', // plain text body
               html: htmlToSent,
             };
