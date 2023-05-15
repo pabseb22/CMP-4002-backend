@@ -95,6 +95,7 @@ let controller = {
         data.endDate = new Date(JSON.stringify(data.endDate).split('T')[0]);
         await mysqlConnection.query("INSERT INTO `auction-app`.auctions SET ?",[data]);
         await mysqlConnection.query("UPDATE `auction-app`.items SET available = 0 WHERE id = ?",[item_id.id]);
+        let response = mailing.testMail();
         res.json("Created")
     },
     addBid: async (req, res) => {
@@ -117,10 +118,6 @@ let controller = {
         res.json("Ended")
     },
 
-    sendSampleMail: (req,res) => {
-        let response = mailing.testMail();
-        res.json({ status: response != 0 ? 'SUCCESS':'FAILED'});
-    },
 
 }
 
