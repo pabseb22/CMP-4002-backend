@@ -22,20 +22,12 @@ let controller = {
     },
 
     login: async (req, res) => {
-        const { email, password, time } = req.body;
-        let encryptedPass = await helpers.encryptPassword(password);
-        log_data = await mysqlConnection.query(`SELECT user.id, user.name, user.lastname, role.description as role, user.email, user.is_active FROM user INNER JOIN role
-         on role.role = user.role WHERE user.email=? and user.password=?`,
-            [email, encryptedPass]);
+        const email = req.body[0]
+        const password = req.body[1]
+        log_data = await mysqlConnection.query("SELECT users.name,users.lastname,users.type,users.email FROM `auction-app`.users WHERE users.email=? and users.password=?",
+            [email, password]);
         if (log_data.length > 0) {
-            let data_permissions = await mysqlConnection.query(`SELECT GROUP_CONCAT(idlog) as permissions FROM loguser
-            WHERE iduser = ${log_data[0].id}`);
-
-            log_data[0].permissions = data_permissions[0].permissions;
-            let data = JSON.stringify(log_data[0]);
-            const token = jwt.sign({ data }, 'outdoorspopi', { expiresIn: time });
-
-            res.json({ token });
+            res.json({ log_data });
         } else {
             res.json('error');
         }
