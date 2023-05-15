@@ -28,4 +28,6 @@ router.post('/end-auction', IndexController.endAuction);
 
 router.post('/add-bid', IndexController.addBid);
 
+router.get('/send-sample-mail', IndexController.sendSampleMail);
+
 module.exports = router;

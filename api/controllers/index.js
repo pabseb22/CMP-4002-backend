@@ -1,5 +1,6 @@
 const helpers = require('../../helpers/helpers');
 const mysqlConnection = require('../connection/connection');
+const mailing = require('../../helpers/emailTemplates');
 
 
 const jwt = require('jsonwebtoken');
@@ -120,7 +121,13 @@ let controller = {
     endAuction: async (req, res) => {
         const { auction_id}  = req.body;
         await mysqlConnection.query("UPDATE `auction-app`.auctions SET status = 1 WHERE id = ? ", [auction_id]);
+        let response = mailing.testMail();
         res.json("Ended")
+    },
+
+    sendSampleMail: (req,res) => {
+        let response = mailing.testMail();
+        res.json({ status: response != 0 ? 'SUCCESS':'FAILED'});
     },
 
 }
