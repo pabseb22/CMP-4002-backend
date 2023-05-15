@@ -18,4 +18,14 @@ router.post('/edit-item', IndexController.editItem);
 
 router.post('/subscribe-to-item', IndexController.subscribeItem);
 
+router.post('/unsubscribe-to-item', IndexController.unsubscribeItem);
+
+router.get('/get-auctions', IndexController.getAuction);
+
+router.post('/add-auction', IndexController.addAuction);
+
+router.post('/end-auction', IndexController.endAuction);
+
+router.post('/add-bid', IndexController.addBid);
+
 module.exports = router;
