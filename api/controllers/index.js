@@ -18,8 +18,7 @@ let controller = {
     },
     login: async (req, res) => {
         const email = req.body.email;
-        const password = req.body.password;
-
+        const password = await helpers.encryptPassword(req.body.password);
         try {
             // Fetch user data with hashed password
             const userData = await mysqlConnection.query(

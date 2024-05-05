@@ -1,21 +1,22 @@
 {
-  "name": "auction-manager-backend",
+  "name": "cmp-4002-backend",
   "version": "1.0.0",
   "description": "Backend From Acution Manager App",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
+    "start": "nodemon server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pabseb22/auction-manager-backend.git"
+    "url": "git+https://github.com/pabseb22/CMP-4002-backend.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/pabseb22/auction-manager-backend/issues"
+    "url": "https://github.com/pabseb22/CMP-4002-backend/issues"
   },
-  "homepage": "https://github.com/pabseb22/auction-manager-backend#readme",
+  "homepage": "https://github.com/pabseb22/CMP-4002-backend#readme",
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
@@ -24,5 +25,8 @@
     "morgan": "^1.10.0",
     "mysql": "^2.18.1",
     "socket.io": "^4.6.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
   }
 }

@@ -29,6 +29,7 @@ mysqlConnection.getConnection((err, connection) => {
   }
   if (connection) {
     connection.release(); console.log('DATABASE CONNECTION SUCCESSFUL -> ', connEnv.host);
+    console.log('CONNECTED TO -> ', connEnv.database);
   } else {
     console.log('CONNECTION FAILED');
   }
