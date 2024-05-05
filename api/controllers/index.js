@@ -1,9 +1,5 @@
 const helpers = require('../../helpers/helpers');
 const mysqlConnection = require('../connection/connection');
-const mailing = require('../../helpers/emailTemplates');
-
-
-const jwt = require('jsonwebtoken');
 
 let controller = {
 
@@ -16,107 +12,150 @@ let controller = {
             let encriptedPass = await helpers.encryptPassword(req.body.password);
             res.send({ "response": encriptedPass });
         } else {
-            res.status(404).send("Not provieded a password");
+            res.status(404).send("Not provided a password");
         }
 
     },
-
     login: async (req, res) => {
-        const email = req.body[0]
-        const password = req.body[1]
-        log_data = await mysqlConnection.query("SELECT users.name,users.lastname,users.type,users.email FROM `auction-app`.users WHERE users.email=? and users.password=?",
-            [email, password]);
-        if (log_data.length > 0) {
-            res.json({ log_data });
-        } else {
-            res.json('error');
-        }
+        const email = req.body.email;
+        const password = req.body.password;
 
-    },
+        try {
+            // Fetch user data with hashed password
+            const userData = await mysqlConnection.query(
+                `SELECT user.user_id, user.name, user.lastname, user.email, role.label AS role_label, role.value AS role_value FROM user 
+                INNER JOIN role ON user.role_id = role.role_id WHERE user.email = ? and user.password=?`,
+                [email, password]
+            );
 
-    getItems: async (req, res) => {
-        let items = await mysqlConnection.query("SELECT * FROM `auction-app`.items");
-        for(let i = 0; i < items.length; i++){
-            items[i].interested = []
-            let interested = await mysqlConnection.query("SELECT email FROM `auction-app`.item_subscriptions WHERE item_id = ?",[items[i].id]);
-            if(interested.length > 0){
-                for(let j = 0; j < interested.length; j ++){
-                    items[i].interested.push(interested[j].email);
-                }
-
-            }else{
-                items[i].interested.push(" ");
+            if (userData.length === 0) {
+                return res.status(401).json({ error: "User not found" });
             }
-            
+
+            const user = userData[0];
+
+            // Fetch additional user data based on role
+            let additionalUserData;
+
+            if (user.role_value === 'internal') {
+                // Fetch internal user data
+                additionalUserData = await mysqlConnection.query(
+                    "SELECT * FROM internal_user WHERE user_id = ?",
+                    [user.user_id]
+                );
+            } else if (user.role_value === 'external') {
+                // Fetch external user data
+                additionalUserData = await mysqlConnection.query(
+                    "SELECT * FROM external_user WHERE user_id = ?",
+                    [user.user_id]
+                );
+            }
+
+            // Merge user data with additional user data
+            const mergedUserData = { ...user, additionalUserData };
+
+            // Send merged user data
+            res.status(200).json(mergedUserData);
+        } catch (error) {
+            console.error("Error logging in:", error);
+            res.status(500).json({ error: "Internal server error" });
         }
-        res.json(items)
     },
-    addItem: async (req, res) => {
-        const { name, imgsrc, des, available, starting_price} = req.body;
-        let data = { name, imgsrc, des, available, starting_price};
-        data.imgsrc = data.imgsrc.replace(/'/g, '');
-        await mysqlConnection.query("INSERT INTO `auction-app`.items SET ?",[data]);
-        res.json("Created")
+
+    getEvents: async (req, res) => {
+        try {
+            const events = await mysqlConnection.query(`
+                SELECT 
+                    e.event_id,
+                    e.name AS event_name,
+                    e.description AS event_description,
+                    e.date AS event_date,
+                    e.location AS event_location,
+                    e.start_time AS event_start_time,
+                    e.kit_pickup_location AS event_kit_pickup_location,
+                    e.kit_pickup_date AS event_kit_pickup_date,
+                    b.business_id,
+                    b.name AS business_name,
+                    b.email AS business_email,
+                    b.ruc AS business_ruc,
+                    b.phone AS business_phone,
+                    b.address AS business_address,
+                    et.event_type_id,
+                    et.label AS event_type_label,
+                    et.value AS event_type_value,
+                    et.description AS event_type_description
+                FROM 
+                    event e
+                INNER JOIN 
+                    business b ON e.business_id = b.business_id
+                INNER JOIN 
+                    event_type et ON e.event_type_id = et.event_type_id
+            `);
+
+            res.status(200).json({ events });
+        } catch (error) {
+            console.error("Error fetching events:", error);
+            res.status(500).json({ error: "Internal server error" });
+        }
+    },
+
+    getEventCategories: async (req, res) => {
+        const eventId = req.params.eventId; // Assuming eventId is passed as a parameter
+
+        try {
+            // Fetch categories for the given event
+            const categories = await mysqlConnection.query(
+                "SELECT * FROM `category` WHERE event_id = ?",
+                [eventId]
+            );
+
+            res.status(200).json({ categories });
+        } catch (error) {
+            console.error("Error fetching categories:", error);
+            res.status(500).json({ error: "Internal server error" });
+        }
+    },
+
+
+    registerUserToEvent: async (req, res) => {
+        const { external_user_id, event_id, category_id, running_number, status, payment_method } = req.body;
+
+        try {
+            // Insert registration data into the register table
+            const result = await mysqlConnection.query(
+                "INSERT INTO `register` (external_user_id, event_id, category_id, running_number, registration_date, status, payment_method) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                [external_user_id, event_id, category_id, running_number, new Date(), status, payment_method]
+            );
+
+            const registrationId = result.insertId;
+
+            res.status(201).json({ registration_id: registrationId, message: "Registration successful" });
+        } catch (error) {
+            console.error("Error registering user to event:", error);
+            res.status(500).json({ error: "Internal server error" });
+        }
+    },
+
+    getResultsByEventId: async (req, res) => {
+        const eventId = req.params.eventId;
+
+        try {
+            // Fetch results for the given event_id from the result_view
+            const results = await mysqlConnection.query(
+                "SELECT * FROM result_view WHERE event_id = ?",
+                [eventId]
+            );
+
+            res.status(200).json({ results });
+        } catch (error) {
+            console.error("Error fetching results:", error);
+            res.status(500).json({ error: "Internal server error" });
+        }
     }
-    ,
-    editItem: async (req, res) => {
-        const { id, name, imgsrc, des, available, starting_price} = req.body;
-        let data = { name, imgsrc, des, available, starting_price};
-        data.imgsrc = data.imgsrc.replace(/'/g, '');
-        await mysqlConnection.query("UPDATE `auction-app`.items SET ? WHERE id = ?",[data, id]);
-        res.json("Created");
-    },
-    subscribeItem: async (req, res) => {
-        const { item_id, email} = req.body;
-        await mysqlConnection.query("INSERT INTO `auction-app`.item_subscriptions SET item_id = ?, email = ?", [item_id, email]);
-        res.json("Added")
-    },
-    getAuction: async (req, res) => {
-        let auctions = await mysqlConnection.query("SELECT `auction-app`.auctions.*, `auction-app`.items.name, `auction-app`.items.imgsrc FROM `auction-app`.auctions INNER JOIN `auction-app`.items on `auction-app`.items.id = `auction-app`.auctions.item_id");
-        for(let i = 0; i < auctions.length; i++){
-            auctions[i].bids = []
-            let bids = await mysqlConnection.query("SELECT email FROM `auction-app`.bids WHERE auction_id = ?",[auctions[i].id]);
-            if(bids.length > 0){
-                for(let j = 0; j < bids.length; j ++){
-                    auctions[i].bids.push(bids[j].email);
-                }
 
-            }else{
-                auctions[i].bids.push(" ");
-            }
-            
-        }
-        res.json(auctions)
-    },
-    addAuction: async (req, res) => {
-        const { item_id, price, startDate, endDate} = req.body;
-        let data = { item_id: item_id.id, price, startDate, endDate};
-        data.startDate = new Date(JSON.stringify(data.startDate).split('T')[0]);
-        data.endDate = new Date(JSON.stringify(data.endDate).split('T')[0]);
-        await mysqlConnection.query("INSERT INTO `auction-app`.auctions SET ?",[data]);
-        await mysqlConnection.query("UPDATE `auction-app`.items SET available = 0 WHERE id = ?",[item_id.id]);
-        let response = mailing.testMail(0);
-        res.json("Created")
-    },
-    addBid: async (req, res) => {
-        const { auction_id, amount, user_id, email} = req.body;
-        let data = { auction_id, amount, user_id, email};
-        await mysqlConnection.query("INSERT INTO `auction-app`.bids SET ?",[data]);
-        await mysqlConnection.query("UPDATE `auction-app`.auctions SET price = ? WHERE id = ?", [amount, auction_id])
-        res.json("Created")
-    },
-    unsubscribeItem: async (req, res) => {
-        const { item_id, email} = req.body;
-        await mysqlConnection.query("DELETE FROM `auction-app`.item_subscriptions WHERE item_id = ? AND email = ?", [item_id, email]);
-        res.json("Added")
-    },
 
-    endAuction: async (req, res) => {
-        const { auction_id}  = req.body;
-        await mysqlConnection.query("UPDATE `auction-app`.auctions SET status = 1 WHERE id = ? ", [auction_id]);
-        let response = mailing.testMail(1);
-        res.json("Ended")
-    },
+
+
 
 
 }

@@ -1,28 +1,17 @@
 const mysql = require('mysql');
 const { promisify } = require('util');
-const fs = require('fs');
+
 
 let connEnv = {};
 
-if (process.env.NODE_ENV === 'development') {
-  connEnv = {
-    host: process.env.DATABASE_HOST,
-    user: process.env.DATABASE_USER,
-    port: process.env.DATABASE_PORT,
-    password: process.env.DATABASE_PASS,
-    database: process.env.DATABASE_NAME
-  }
+connEnv = {
+  host: process.env.DATABASE_HOST,
+  user: process.env.DATABASE_USER,
+  port: process.env.DATABASE_PORT,
+  password: process.env.DATABASE_PASS,
+  database: process.env.DATABASE_NAME
 }
 
-if (process.env.NODE_ENV === 'production') {
-  connEnv = {
-    host: process.env.PROD_DATABASE_HOST,
-    user: process.env.PROD_DATABASE_USER,
-    port: process.env.PROD_DATABASE_PORT,
-    password: process.env.PROD_DATABASE_PASS,
-    database: process.env.PROD_DATABASE_NAME
-  }
-}
 
 const mysqlConnection = mysql.createPool(connEnv);
 
@@ -39,9 +28,9 @@ mysqlConnection.getConnection((err, connection) => {
     }
   }
   if (connection) {
-    connection.release(); console.log('DB is Connected -> ',connEnv.host);
+    connection.release(); console.log('DATABASE CONNECTION SUCCESSFUL -> ', connEnv.host);
   } else {
-    console.log('Not possible');
+    console.log('CONNECTION FAILED');
   }
 
   return;

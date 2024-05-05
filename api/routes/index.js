@@ -10,22 +10,12 @@ router.post('/encript', IndexController.encript);
 
 router.post('/login', IndexController.login);
 
-router.get('/get-items', IndexController.getItems);
+router.get('/get-events', IndexController.getEvents);
 
-router.post('/add-item', IndexController.addItem);
+router.post('/get-event-categories', IndexController.getEventCategories);
 
-router.post('/edit-item', IndexController.editItem);
+router.post('/register-user-to-event', IndexController.registerUserToEvent);
 
-router.post('/subscribe-to-item', IndexController.subscribeItem);
-
-router.post('/unsubscribe-to-item', IndexController.unsubscribeItem);
-
-router.get('/get-auctions', IndexController.getAuction);
-
-router.post('/add-auction', IndexController.addAuction);
-
-router.post('/end-auction', IndexController.endAuction);
-
-router.post('/add-bid', IndexController.addBid);
+router.post('/get-event-results', IndexController.getResultsByEventId);
 
 module.exports = router;
