@@ -99,8 +99,7 @@ let controller = {
     },
 
     getEventCategories: async (req, res) => {
-        const eventId = req.params.eventId; // Assuming eventId is passed as a parameter
-
+        const eventId = req.body.eventId; // Assuming eventId is passed as a parameter
         try {
             // Fetch categories for the given event
             const categories = await mysqlConnection.query(
@@ -136,7 +135,7 @@ let controller = {
     },
 
     getResultsByEventId: async (req, res) => {
-        const eventId = req.params.eventId;
+        const eventId = req.body.eventId;
 
         try {
             // Fetch results for the given event_id from the result_view
