@@ -117,22 +117,21 @@ let controller = {
 
     registerUserToEvent: async (req, res) => {
         const { external_user_id, event_id, category_id, running_number, status, payment_method } = req.body;
-
+        console.log(external_user_id," ", event_id, " ",category_id );
         try {
-            // Insert registration data into the register table
+            // Call the stored procedure to register the user to the event
             const result = await mysqlConnection.query(
-                "INSERT INTO `register` (external_user_id, event_id, category_id, running_number, registration_date, status, payment_method) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                [external_user_id, event_id, category_id, running_number, new Date(), status, payment_method]
+                `CALL register_for_event(?, ?, ?, ?, ?)`,
+                [external_user_id, event_id, category_id, running_number, payment_method]
             );
 
-            const registrationId = result.insertId;
-
-            res.status(201).json({ registration_id: registrationId, message: "Registration successful" });
+            res.status(201).json({ message: "Registration successful" });
         } catch (error) {
             console.error("Error registering user to event:", error);
             res.status(500).json({ error: "Internal server error" });
         }
     },
+
 
     getResultsByEventId: async (req, res) => {
         const eventId = req.body.eventId;
@@ -140,8 +139,7 @@ let controller = {
         try {
             // Fetch results for the given event_id from the result_view
             const results = await mysqlConnection.query(
-                "SELECT * FROM result_view WHERE event_id = ?",
-                [eventId]
+                "SELECT * FROM result_view"
             );
 
             res.status(200).json({ results });
